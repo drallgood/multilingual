@@ -17,7 +17,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "octopress-hooks"
+  spec.add_runtime_dependency "jekyll", ">= 3.0.0.a", "< 4"
 
   spec.add_development_dependency "octopress"
   spec.add_development_dependency "octopress-linkblog"
@@ -25,7 +25,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
 
-  if RUBY_VERSION >= "2"
-    spec.add_development_dependency "octopress-debugger"
-  end
+  spec.add_development_dependency "octopress-debugger"
 end
