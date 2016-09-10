@@ -66,124 +66,17 @@ module Octopress
 
     def languages
       @languages ||= begin
-        languages = site.posts.dup.concat(site.pages).select(&:lang).group_by(&:lang).keys
+        languages = Array.new
+        site.collections.each do |collection_name, collection|
+          languages.concat(collection.docs.select(&:lang).group_by(&:lang).keys)
+        end
         (languages.unshift(main_language)).uniq
       end
-    end
-
-    def posts_by_language(lang=nil)
-      @posts_by_language ||= begin
-        posts = site.posts.reverse.select(&:lang).group_by(&:lang)
-        ## Add posts that crosspost to all languages
-        
-        posts.each do |lang, lang_posts|
-          if lang != main_language
-            lang_posts.concat(crossposts).sort_by!(&:date).reverse!
-          end
-        end
-
-        posts[main_language] = main_language_posts
-        posts
-      end
-
-      @posts_by_language[lang] || []
-    end
-
-    def crossposts
-      site.posts.select(&:crosspost_languages)
-    end
-
-    def main_language_posts
-      site.posts.reverse.select do |post|
-        post.lang.nil? || post.lang == main_language
-      end
-    end
-
-    def posts_without_lang
-      @posts_without_lang ||= site.reject(&:lang)
-    end
-
-    def articles_by_language(lang=nil)
-      @articles_by_language ||= begin
-        articles = {}
-
-        languages.each do |lang|
-          if posts = posts_by_language(lang)
-            articles[lang] = posts.reject do |p|
-              p.data['linkpost']
-            end
-          end
-        end
-
-        articles
-      end
-
-      @articles_by_language[lang] || []
-    end
-
-    def linkposts_by_language(lang=nil)
-      @linkposts_by_language ||= begin
-        linkposts = {}
-
-        languages.each do |lang|
-          if posts = posts_by_language(lang)
-            linkposts[lang] = posts.select do |p|
-              p.data['linkpost']
-            end
-          end
-        end
-
-        linkposts
-      end
-
-      @linkposts_by_language[lang] || []
-    end
-
-    def metadata_index_by_language(index)
-      # Get site categories or tags
-      site_indexes = site.send(index)
-
-      indexes = {}
-
-      # Filter indexes for each language
-      languages.each do |lang|
-        indexes[lang] = {}
-        site_indexes.each do |index, posts|
-          posts = posts.select do |p| 
-            p.lang == lang || (lang == main_language && p.lang.nil?) || p.crosspost_languages
-          end
-
-          indexes[lang][index] = posts unless posts.empty?
-        end
-      end
-
-      indexes
-    end
-
-    def categories_by_language(lang=nil)
-      @categories ||= metadata_index_by_language(:categories)
-      @categories[lang] || {}
-    end
-
-    def tags_by_language(lang=nil)
-      @tags ||= metadata_index_by_language(:tags)
-      @tags[lang] || {}
     end
 
     def page_payload(lang, payload={})
       if lang
         payload['site'] ||= {}
-
-        {
-          'posts'      => posts_by_language(lang),
-          'linkposts'  => linkposts_by_language(lang),
-          'articles'   => articles_by_language(lang),
-          'categories' => categories_by_language(lang),
-          'tags'       => tags_by_language(lang)
-        }.each do |key, value|
-          payload['site'][key] = value
-        end
-
         payload['lang'] = lang_dict[lang]
 
         if defined?(Octopress::Ink) && site.config['lang']
@@ -193,15 +86,10 @@ module Octopress
 
       payload
     end
-
+    
     def site_payload(payload)
       if main_language
         payload['site'].merge!({
-          'posts_by_language'      => posts_by_language,
-          'linkposts_by_language'  => linkposts_by_language,
-          'articles_by_language'   => articles_by_language,
-          'categories_by_language' => categories_by_language,
-          'tags_by_language'       => tags_by_language,
           'languages'              => languages
         })
         payload['lang'] = lang_dict[main_language]

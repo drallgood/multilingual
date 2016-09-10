@@ -6,7 +6,7 @@ module Octopress
     end
 
     Jekyll::Hooks.register :site, :pre_render, priority: :high do |site, payload|
-      [site.pages, site.posts].flatten.select(&:translated).each do |item|
+      [site.pages, site.posts.docs].flatten.select(&:translated).each do |item|
         # Access array of translated items via (post/page).translations
         item.data.merge!({
           'translations' => item.translations,
